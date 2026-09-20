@@ -1,24 +1,26 @@
 import { Libro } from '../models/Libro';
+import { LibroRepository } from '../repositories/LibroRepository';
 
 export class LibroService {
-  private libros: Libro[];
+  private repository: LibroRepository;
 
   constructor() {
-    this.libros = [];
+    this.repository = LibroRepository.getInstance();
+
+    const instanciaA = LibroRepository.getInstance();
+    const instanciaB = LibroRepository.getInstance();
+    console.log('Prueba Singleton:', instanciaA === instanciaB);
   }
 
   public obtenerLibros(): Libro[] {
-    return [...this.libros];
+    return this.repository.obtenerLibros();
   }
 
-  public agregarLibro(titulo: string, autor: string, anio: number): Libro {
-    const nuevoId = Date.now().toString();
-    const nuevoLibro = new Libro(nuevoId, titulo, autor, anio);
-    this.libros.push(nuevoLibro);
-    return nuevoLibro;
+  public agregarLibro(libro: Libro): void {
+    this.repository.agregarLibro(libro);
   }
 
   public eliminarLibro(id: string): void {
-    this.libros = this.libros.filter(libro => libro.getId() !== id);
+    this.repository.eliminarLibro(id);
   }
 }
