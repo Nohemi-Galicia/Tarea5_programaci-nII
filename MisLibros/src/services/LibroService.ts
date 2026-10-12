@@ -1,26 +1,17 @@
-import { Libro } from '../models/Libro';
-import { LibroRepository } from '../repositories/LibroRepository';
+import { LibroRepository, Libro } from '../repositories/LibroRepository';
 
 export class LibroService {
-  private repository: LibroRepository;
+  private repository = LibroRepository.getInstance();
 
-  constructor() {
-    this.repository = LibroRepository.getInstance();
-
-    const instanciaA = LibroRepository.getInstance();
-    const instanciaB = LibroRepository.getInstance();
-    console.log('Prueba Singleton:', instanciaA === instanciaB);
+  async obtenerLibros(): Promise<Libro[]> {
+    return await this.repository.obtenerLibros();
   }
 
-  public obtenerLibros(): Libro[] {
-    return this.repository.obtenerLibros();
+  async agregarLibro(titulo: string, autor: string, anio: number): Promise<Libro | null> {
+    return await this.repository.agregarLibro({ titulo, autor, anio });
   }
 
-  public agregarLibro(libro: Libro): void {
-    this.repository.agregarLibro(libro);
-  }
-
-  public eliminarLibro(id: string): void {
-    this.repository.eliminarLibro(id);
+  async eliminarLibro(id: number): Promise<boolean> {
+    return await this.repository.eliminarLibro(id);
   }
 }

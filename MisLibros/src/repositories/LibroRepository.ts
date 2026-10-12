@@ -1,35 +1,68 @@
-import { Libro } from '../models/Libro';
+import { supabase } from '../supabase';
+
+export interface Libro {
+  id?: number;
+  titulo: string;
+  autor: string;
+  anio: number;
+  user_id?: string;
+}
 
 export class LibroRepository {
-  private static instancia: LibroRepository;
-  private libros: Libro[] = [];
+  private static instance: LibroRepository;
 
-  private constructor() {
-    
-    this.libros = [
-      new Libro('1', 'El Principito', 'Antoine', 1943),
-      new Libro('2', 'Barbuchín', 'Daniel Armas', 1941),
-      new Libro('3', 'El Sembrador Escolar', 'Silvia', 2000)
-    ];
-  }
+  private constructor() {}
 
   public static getInstance(): LibroRepository {
-    if (!LibroRepository.instancia) {
-      LibroRepository.instancia = new LibroRepository();
+    if (!LibroRepository.instance) {
+      LibroRepository.instance = new LibroRepository();
     }
-    return LibroRepository.instancia;
+    return LibroRepository.instance;
   }
 
-  public obtenerLibros(): Libro[] {
-    return [...this.libros];
+  async obtenerLibros(): Promise<Libro[]> {
+    const { data, error } = await supabase
+      .from('libros')
+      .select('*')
+      .order('id', { ascending: false });
+
+    if (error) {
+      console.error('Error al obtener libros:', error.message);
+      return [];
+    }
+    return data || [];
   }
 
-  public agregarLibro(libro: Libro): void {
-    this.libros.push(libro);
+  async agregarLibro(libro: Omit<Libro, 'id' | 'user_id'>): Promise<Libro | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.error('No hay usuario autenticado');
+      return null;
+    }
+
+    const { data, error } = await supabase
+      .from('libros')
+      .insert([{ ...libro, user_id: user.id }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error al agregar libro:', error.message);
+      return null;
+    }
+    return data;
   }
 
-  public eliminarLibro(id: string): void {
-    
-    this.libros = this.libros.filter((l) => l.getId() !== id);
+  async eliminarLibro(id: number): Promise<boolean> {
+    const { error } = await supabase
+      .from('libros')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error al eliminar libro:', error.message);
+      return false;
+    }
+    return true;
   }
 }
